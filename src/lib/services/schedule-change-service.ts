@@ -49,7 +49,10 @@ export function compareScheduleEntries(
       continue;
     }
 
-    if (previousEntry.rideDateTime !== newEntry.rideDateTime) {
+    if (
+      previousEntry.rideDateTime !== newEntry.rideDateTime ||
+      previousEntry.arena !== newEntry.arena
+    ) {
       changes.push({
         type: "time-changed",
         key,

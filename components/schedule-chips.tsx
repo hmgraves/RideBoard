@@ -1,8 +1,12 @@
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 type ChipProps = {
   className?: string;
 };
+
+const chipClassName =
+  "h-4 rounded-full px-1.5 py-0 text-[10px] leading-none sm:h-5 sm:px-2 sm:text-xs";
 
 export function PhaseChip({
   phase,
@@ -13,7 +17,11 @@ export function PhaseChip({
   if (normalizedPhase === "dressage") {
     return (
       <Badge
-        className={`border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-50 ${className ?? ""}`}
+        className={cn(
+          chipClassName,
+          "border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-50",
+          className
+        )}
       >
         Dressage
       </Badge>
@@ -23,7 +31,11 @@ export function PhaseChip({
   if (normalizedPhase === "cross country") {
     return (
       <Badge
-        className={`border-green-200 bg-green-50 text-green-700 hover:bg-green-50 ${className ?? ""}`}
+        className={cn(
+          chipClassName,
+          "border-green-200 bg-green-50 text-green-700 hover:bg-green-50",
+          className
+        )}
       >
         Cross Country
       </Badge>
@@ -33,7 +45,11 @@ export function PhaseChip({
   if (normalizedPhase === "show jumping") {
     return (
       <Badge
-        className={`border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-50 ${className ?? ""}`}
+        className={cn(
+          chipClassName,
+          "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-50",
+          className
+        )}
       >
         Show Jumping
       </Badge>
@@ -41,7 +57,7 @@ export function PhaseChip({
   }
 
   return (
-    <Badge variant="outline" className={className}>
+    <Badge variant="outline" className={cn(chipClassName, className)}>
       {phase}
     </Badge>
   );
@@ -53,7 +69,7 @@ export function ArenaChip({
 }: ChipProps & { arena: string | null }) {
   if (!arena) {
     return (
-      <Badge variant="outline" className={className}>
+      <Badge variant="outline" className={cn(chipClassName, className)}>
         —
       </Badge>
     );
@@ -64,7 +80,11 @@ export function ArenaChip({
   if (normalizedArena === "sj") {
     return (
       <Badge
-        className={`border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-50 ${className ?? ""}`}
+        className={cn(
+          chipClassName,
+          "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-50",
+          className
+        )}
       >
         SJ
       </Badge>
@@ -74,7 +94,11 @@ export function ArenaChip({
   if (normalizedArena === "xc") {
     return (
       <Badge
-        className={`border-green-200 bg-green-50 text-green-700 hover:bg-green-50 ${className ?? ""}`}
+        className={cn(
+          chipClassName,
+          "border-green-200 bg-green-50 text-green-700 hover:bg-green-50",
+          className
+        )}
       >
         XC
       </Badge>
@@ -91,7 +115,11 @@ export function ArenaChip({
   if (normalizedArena in dressageArenaStyles) {
     return (
       <Badge
-        className={`${dressageArenaStyles[normalizedArena]} ${className ?? ""}`}
+        className={cn(
+          chipClassName,
+          dressageArenaStyles[normalizedArena],
+          className
+        )}
       >
         {arena}
       </Badge>
@@ -101,7 +129,11 @@ export function ArenaChip({
   if (normalizedArena.startsWith("r")) {
     return (
       <Badge
-        className={`border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-50 ${className ?? ""}`}
+        className={cn(
+          chipClassName,
+          "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-50",
+          className
+        )}
       >
         {arena}
       </Badge>
@@ -109,7 +141,7 @@ export function ArenaChip({
   }
 
   return (
-    <Badge variant="outline" className={className}>
+    <Badge variant="outline" className={cn(chipClassName, className)}>
       {arena}
     </Badge>
   );

@@ -52,6 +52,12 @@ export default async function SharedSchedulePage({
   const removedChanges = publishedSchedule.changes.filter(
     (change) => change.type === "removed"
   );
+  const addedChanges = publishedSchedule.changes.filter(
+    (change) => change.type === "added"
+  );
+  const changedChanges = publishedSchedule.changes.filter(
+    (change) => change.type === "time-changed"
+  );
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
@@ -137,6 +143,115 @@ export default async function SharedSchedulePage({
           </Card>
         ) : null}
 
+        {changedChanges.length > 0 ? (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <CardTitle>Changes</CardTitle>
+                <Badge className="border-amber-200 bg-amber-100 text-amber-800 hover:bg-amber-100">
+                  {changedChanges.length}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Previous</TableHead>
+                      <TableHead>New</TableHead>
+                      <TableHead>Rider</TableHead>
+                      <TableHead>Horse</TableHead>
+                      <TableHead>Phase</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {changedChanges.map((change) => (
+                      <TableRow key={change.key} className="bg-amber-50/60">
+                        <TableCell>
+                          <div className="font-semibold">
+                            {change.previousEntry?.rideTime ?? "-"}
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <span>{change.previousEntry?.rideDateLabel}</span>
+                            <ArenaChip
+                              arena={change.previousEntry?.arena ?? null}
+                            />
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-semibold">
+                            {change.newEntry?.rideTime ?? "-"}
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <span>{change.newEntry?.rideDateLabel}</span>
+                            <ArenaChip arena={change.newEntry?.arena ?? null} />
+                          </div>
+                        </TableCell>
+                        <TableCell>{change.riderName}</TableCell>
+                        <TableCell>{change.horseName}</TableCell>
+                        <TableCell>
+                          <PhaseChip phase={change.phase} />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {addedChanges.length > 0 ? (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <CardTitle>Added Rides</CardTitle>
+                <Badge className="border-green-200 bg-green-100 text-green-800 hover:bg-green-100">
+                  {addedChanges.length}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Time</TableHead>
+                      <TableHead>Rider</TableHead>
+                      <TableHead>Horse</TableHead>
+                      <TableHead>Phase</TableHead>
+                      <TableHead>Arena</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {addedChanges.map((change) => (
+                      <TableRow key={change.key} className="bg-green-50/60">
+                        <TableCell>
+                          <div className="font-semibold">
+                            {change.newEntry?.rideTime ?? "-"}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {change.newEntry?.rideDateLabel}
+                          </div>
+                        </TableCell>
+                        <TableCell>{change.riderName}</TableCell>
+                        <TableCell>{change.horseName}</TableCell>
+                        <TableCell>
+                          <PhaseChip phase={change.phase} />
+                        </TableCell>
+                        <TableCell>
+                          <ArenaChip arena={change.newEntry?.arena ?? null} />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
+
         {dayGroups.map((group) => (
           <Card key={group.dateLabel} className="overflow-hidden">
             <CardHeader>
@@ -175,15 +290,15 @@ export default async function SharedSchedulePage({
                           key={entry.id}
                           className={
                             change?.type === "added"
-                              ? "block border-b bg-green-50/70 p-4 md:table-row md:p-0"
+                              ? "grid grid-cols-[4.75rem_minmax(0,1fr)_auto] gap-x-2 gap-y-0.5 border-b bg-green-50/70 p-2 md:table-row md:p-0"
                               : change?.type === "time-changed"
-                                ? "block border-b bg-amber-50/70 p-4 md:table-row md:p-0"
-                                : "block border-b p-4 md:table-row md:p-0"
+                                ? "grid grid-cols-[4.75rem_minmax(0,1fr)_auto] gap-x-2 gap-y-0.5 border-b bg-amber-50/70 p-2 md:table-row md:p-0"
+                                : "grid grid-cols-[4.75rem_minmax(0,1fr)_auto] gap-x-2 gap-y-0.5 border-b p-2 md:table-row md:p-0"
                           }
                         >
                           <MobileCell label="Time">
-                            <div className="text-right md:text-left">
-                              <div className="flex items-center justify-end gap-1 md:justify-start">
+                            <div className="text-left">
+                              <div className="flex flex-col items-start gap-0.5 md:flex-row md:items-center md:gap-1">
                                 <span className="font-semibold">
                                   {entry.rideTime}
                                 </span>
@@ -191,15 +306,19 @@ export default async function SharedSchedulePage({
                                   <Badge
                                     className={
                                       change.type === "added"
-                                        ? "border-green-200 bg-green-100 text-green-800 hover:bg-green-100"
-                                        : "border-amber-200 bg-amber-100 text-amber-800 hover:bg-amber-100"
+                                        ? "h-4 rounded-full border-green-200 bg-green-100 px-1.5 py-0 text-[10px] leading-none text-green-800 hover:bg-green-100 sm:h-5 sm:px-2 sm:text-xs"
+                                        : "h-4 rounded-full border-amber-200 bg-amber-100 px-1.5 py-0 text-[10px] leading-none text-amber-800 hover:bg-amber-100 sm:h-5 sm:px-2 sm:text-xs"
                                     }
                                   >
-                                    {change.type === "added" ? "New" : "Moved"}
+                                    {change.type === "added"
+                                      ? "New"
+                                      : "Changed"}
                                   </Badge>
                                 ) : null}
                               </div>
-                              {change?.type === "time-changed" ? (
+                              {change?.type === "time-changed" &&
+                              change.previousEntry?.rideDateTime !==
+                                change.newEntry?.rideDateTime ? (
                                 <div className="text-xs text-muted-foreground">
                                   was {change.previousEntry?.rideTime}
                                 </div>
@@ -250,13 +369,26 @@ function MobileCell({
   label: string;
   children: React.ReactNode;
 }) {
+  const mobileLayoutByLabel: Record<string, string> = {
+    Time: "col-start-1 row-span-3 row-start-1 self-start",
+    Rider: "col-start-2 row-start-1 min-w-0",
+    Horse: "col-start-2 row-start-2 min-w-0",
+    Phase: "col-start-3 row-start-1 justify-self-end",
+    Arena: "col-start-3 row-start-2 justify-self-end",
+    Division:
+      "col-start-2 row-start-3 min-w-0 text-xs text-muted-foreground",
+    Pinny: "col-start-3 row-start-3 justify-self-end text-xs text-muted-foreground",
+  };
+
   return (
-    <TableCell className="block px-0 py-1 md:table-cell md:px-4 md:py-3">
-      <div className="flex justify-between gap-3 md:block">
-        <span className="text-xs font-medium text-muted-foreground md:hidden">
-          {label}
-        </span>
-        <span className="text-right md:text-left">{children}</span>
+    <TableCell
+      className={`block px-0 py-0 md:table-cell md:px-4 md:py-3 ${mobileLayoutByLabel[label] ?? ""}`}
+    >
+      <div className="block min-w-0">
+        <span className="hidden">{label}</span>
+        <div className="block truncate text-left md:whitespace-normal">
+          {children}
+        </div>
       </div>
     </TableCell>
   );

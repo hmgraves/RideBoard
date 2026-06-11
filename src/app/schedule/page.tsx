@@ -97,18 +97,25 @@ export default function SchedulePage() {
     return teamScheduleChanges.filter((change) => change.type === "removed");
   }, [teamScheduleChanges]);
 
-  const mobileLabelClassName = cn(
-    "text-xs font-medium text-muted-foreground",
-    isScreenshotMode ? "hidden" : "md:hidden"
-  );
+  const addedTeamChanges = useMemo(() => {
+    return teamScheduleChanges.filter((change) => change.type === "added");
+  }, [teamScheduleChanges]);
+
+  const changedTeamChanges = useMemo(() => {
+    return teamScheduleChanges.filter(
+      (change) => change.type === "time-changed"
+    );
+  }, [teamScheduleChanges]);
+
+  const mobileLabelClassName = "hidden";
 
   const stackedCellContentClassName = isScreenshotMode
     ? "block min-w-0"
-    : "flex justify-between gap-3 md:block";
+    : "block min-w-0";
 
   const chipCellContentClassName = isScreenshotMode
     ? "block min-w-0"
-    : "flex items-center justify-between gap-3 md:block";
+    : "flex min-w-0 justify-end md:block";
 
   const tableHeaderClassName = isScreenshotMode
     ? "table-header-group"
@@ -120,11 +127,11 @@ export default function SchedulePage() {
 
   const tableRowClassName = isScreenshotMode
     ? "table-row border-b last:border-b-0"
-    : "block border-b p-4 last:border-b-0 md:table-row md:p-0";
+    : "grid grid-cols-[4.75rem_minmax(0,1fr)_auto] gap-x-2 gap-y-0.5 border-b p-2 last:border-b-0 md:table-row md:p-0";
 
   const tableCellClassName = isScreenshotMode
     ? "table-cell whitespace-normal px-1.5 py-1 align-top"
-    : "block px-0 py-1 md:table-cell md:px-4 md:py-3";
+    : "block px-0 py-0 md:table-cell md:px-4 md:py-3";
 
   const compactTableCellClassName = isScreenshotMode
     ? "whitespace-normal px-1.5 py-1 align-top"
@@ -476,12 +483,8 @@ export default function SchedulePage() {
                 )}
               >
                 <ChangeCount
-                  label="Moved"
-                  count={
-                    teamScheduleChanges.filter(
-                      (change) => change.type === "time-changed"
-                    ).length
-                  }
+                  label="Changes"
+                  count={changedTeamChanges.length}
                 />
                 <ChangeCount
                   label="New"
@@ -492,6 +495,221 @@ export default function SchedulePage() {
                   }
                 />
                 <ChangeCount label="Removed" count={removedTeamChanges.length} />
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {changedTeamChanges.length > 0 ? (
+            <Card size={isScreenshotMode ? "sm" : "default"}>
+              <CardHeader className={cn(isScreenshotMode && "px-2")}>
+                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <CardTitle
+                      className={cn(isScreenshotMode && "text-sm leading-none")}
+                    >
+                      Changes
+                    </CardTitle>
+                    <CardDescription
+                      className={cn(isScreenshotMode && "text-xs")}
+                    >
+                      These team rides changed time, arena, or both.
+                    </CardDescription>
+                  </div>
+
+                  <Badge className="border-amber-200 bg-amber-100 text-amber-800 hover:bg-amber-100">
+                    {changedTeamChanges.length}
+                  </Badge>
+                </div>
+              </CardHeader>
+
+              <CardContent className={cn(isScreenshotMode && "px-2")}>
+                <div className="rounded-md border">
+                  <Table
+                    className={
+                      isScreenshotMode
+                        ? "table-fixed text-[11px] leading-tight"
+                        : undefined
+                    }
+                  >
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead
+                          className={cn(isScreenshotMode && "h-7 px-1.5")}
+                        >
+                          Previous
+                        </TableHead>
+                        <TableHead
+                          className={cn(isScreenshotMode && "h-7 px-1.5")}
+                        >
+                          New
+                        </TableHead>
+                        <TableHead
+                          className={cn(isScreenshotMode && "h-7 px-1.5")}
+                        >
+                          Rider
+                        </TableHead>
+                        <TableHead
+                          className={cn(isScreenshotMode && "h-7 px-1.5")}
+                        >
+                          Horse
+                        </TableHead>
+                        <TableHead
+                          className={cn(isScreenshotMode && "h-7 px-1.5")}
+                        >
+                          Phase
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+
+                    <TableBody>
+                      {changedTeamChanges.map((change) => (
+                        <TableRow key={change.key} className="bg-amber-50/60">
+                          <TableCell className={compactTableCellClassName}>
+                            <div className="font-semibold">
+                              {change.previousEntry?.rideTime ?? "—"}
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <span>{change.previousEntry?.rideDateLabel}</span>
+                              <ArenaChip
+                                arena={change.previousEntry?.arena ?? null}
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell className={compactTableCellClassName}>
+                            <div className="font-semibold">
+                              {change.newEntry?.rideTime ?? "—"}
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <span>{change.newEntry?.rideDateLabel}</span>
+                              <ArenaChip arena={change.newEntry?.arena ?? null} />
+                            </div>
+                          </TableCell>
+                          <TableCell className={compactTableCellClassName}>
+                            {change.riderName}
+                          </TableCell>
+                          <TableCell className={compactTableCellClassName}>
+                            {change.horseName}
+                          </TableCell>
+                          <TableCell className={compactTableCellClassName}>
+                            <PhaseChip
+                              phase={change.phase}
+                              className={cn(
+                                isScreenshotMode &&
+                                  "h-auto px-1 py-0 text-[10px] leading-tight"
+                              )}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {addedTeamChanges.length > 0 ? (
+            <Card size={isScreenshotMode ? "sm" : "default"}>
+              <CardHeader className={cn(isScreenshotMode && "px-2")}>
+                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <CardTitle
+                      className={cn(isScreenshotMode && "text-sm leading-none")}
+                    >
+                      Added Rides
+                    </CardTitle>
+                    <CardDescription
+                      className={cn(isScreenshotMode && "text-xs")}
+                    >
+                      These team rides are new in the current import.
+                    </CardDescription>
+                  </div>
+
+                  <Badge className="border-green-200 bg-green-100 text-green-800 hover:bg-green-100">
+                    {addedTeamChanges.length}
+                  </Badge>
+                </div>
+              </CardHeader>
+
+              <CardContent className={cn(isScreenshotMode && "px-2")}>
+                <div className="rounded-md border">
+                  <Table
+                    className={
+                      isScreenshotMode
+                        ? "table-fixed text-[11px] leading-tight"
+                        : undefined
+                    }
+                  >
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead
+                          className={cn(isScreenshotMode && "h-7 px-1.5")}
+                        >
+                          Time
+                        </TableHead>
+                        <TableHead
+                          className={cn(isScreenshotMode && "h-7 px-1.5")}
+                        >
+                          Rider
+                        </TableHead>
+                        <TableHead
+                          className={cn(isScreenshotMode && "h-7 px-1.5")}
+                        >
+                          Horse
+                        </TableHead>
+                        <TableHead
+                          className={cn(isScreenshotMode && "h-7 px-1.5")}
+                        >
+                          Phase
+                        </TableHead>
+                        <TableHead
+                          className={cn(isScreenshotMode && "h-7 px-1.5")}
+                        >
+                          Arena
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+
+                    <TableBody>
+                      {addedTeamChanges.map((change) => (
+                        <TableRow key={change.key} className="bg-green-50/60">
+                          <TableCell className={compactTableCellClassName}>
+                            <div className="font-semibold">
+                              {change.newEntry?.rideTime ?? "—"}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {change.newEntry?.rideDateLabel}
+                            </div>
+                          </TableCell>
+                          <TableCell className={compactTableCellClassName}>
+                            {change.riderName}
+                          </TableCell>
+                          <TableCell className={compactTableCellClassName}>
+                            {change.horseName}
+                          </TableCell>
+                          <TableCell className={compactTableCellClassName}>
+                            <PhaseChip
+                              phase={change.phase}
+                              className={cn(
+                                isScreenshotMode &&
+                                  "h-auto px-1 py-0 text-[10px] leading-tight"
+                              )}
+                            />
+                          </TableCell>
+                          <TableCell className={compactTableCellClassName}>
+                            <ArenaChip
+                              arena={change.newEntry?.arena ?? null}
+                              className={cn(
+                                isScreenshotMode &&
+                                  "h-auto px-1 py-0 text-[10px] leading-tight"
+                              )}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           ) : null}
@@ -697,18 +915,24 @@ export default function SchedulePage() {
                                 "bg-amber-50/70"
                             )}
                           >
-                            <TableCell className={tableCellClassName}>
+                            <TableCell
+                              className={cn(
+                                tableCellClassName,
+                                !isScreenshotMode &&
+                                  "col-start-1 row-span-3 row-start-1 self-start"
+                              )}
+                            >
                               <div className={stackedCellContentClassName}>
                                 <span className={mobileLabelClassName}>
                                   Time
                                 </span>
                                 <div
                                   className={cn(
-                                    "text-right md:text-left",
+                                    "text-left",
                                     isScreenshotMode && "text-left"
                                   )}
                                 >
-                                  <div className="flex items-center justify-end gap-1 md:justify-start">
+                                  <div className="flex flex-col items-start gap-0.5 md:flex-row md:items-center md:gap-1">
                                     <span className="font-semibold">
                                       {entry.rideTime}
                                     </span>
@@ -719,7 +943,9 @@ export default function SchedulePage() {
                                       />
                                     ) : null}
                                   </div>
-                                  {change?.type === "time-changed" ? (
+                                  {change?.type === "time-changed" &&
+                                  change.previousEntry?.rideDateTime !==
+                                    change.newEntry?.rideDateTime ? (
                                     <div className="text-xs text-muted-foreground">
                                       was {change.previousEntry?.rideTime}
                                     </div>
@@ -728,14 +954,20 @@ export default function SchedulePage() {
                               </div>
                             </TableCell>
 
-                            <TableCell className={tableCellClassName}>
+                            <TableCell
+                              className={cn(
+                                tableCellClassName,
+                                !isScreenshotMode &&
+                                  "col-start-2 row-start-1 min-w-0"
+                              )}
+                            >
                               <div className={stackedCellContentClassName}>
                                 <span className={mobileLabelClassName}>
                                   Rider
                                 </span>
                                 <span
                                   className={cn(
-                                    "text-right md:text-left",
+                                    "block truncate text-left md:whitespace-normal",
                                     isScreenshotMode &&
                                       "block truncate text-left"
                                   )}
@@ -745,79 +977,109 @@ export default function SchedulePage() {
                               </div>
                             </TableCell>
 
-                          <TableCell className={tableCellClassName}>
-                            <div className={stackedCellContentClassName}>
-                              <span className={mobileLabelClassName}>
-                                Horse
-                              </span>
-                              <span
-                                className={cn(
-                                  "text-right font-medium md:text-left",
-                                  isScreenshotMode &&
-                                    "block truncate text-left"
-                                )}
-                              >
-                                {entry.horseName}
-                              </span>
-                            </div>
-                          </TableCell>
+                            <TableCell
+                              className={cn(
+                                tableCellClassName,
+                                !isScreenshotMode &&
+                                  "col-start-2 row-start-2 min-w-0"
+                              )}
+                            >
+                              <div className={stackedCellContentClassName}>
+                                <span className={mobileLabelClassName}>
+                                  Horse
+                                </span>
+                                <span
+                                  className={cn(
+                                    "block truncate text-left font-medium md:whitespace-normal",
+                                    isScreenshotMode &&
+                                      "block truncate text-left"
+                                  )}
+                                >
+                                  {entry.horseName}
+                                </span>
+                              </div>
+                            </TableCell>
 
-                          <TableCell className={tableCellClassName}>
-                            <div className={chipCellContentClassName}>
-                              <span className={mobileLabelClassName}>
-                                Phase
-                              </span>
-                              <PhaseChip
-                                phase={entry.phase}
-                                className={cn(
-                                  isScreenshotMode &&
-                                    "h-auto px-1 py-0 text-[10px] leading-tight"
-                                )}
-                              />
-                            </div>
-                          </TableCell>
+                            <TableCell
+                              className={cn(
+                                tableCellClassName,
+                                !isScreenshotMode &&
+                                  "col-start-3 row-start-1 justify-self-end"
+                              )}
+                            >
+                              <div className={chipCellContentClassName}>
+                                <span className={mobileLabelClassName}>
+                                  Phase
+                                </span>
+                                <PhaseChip
+                                  phase={entry.phase}
+                                  className={cn(
+                                    isScreenshotMode &&
+                                      "h-auto px-1 py-0 text-[10px] leading-tight"
+                                  )}
+                                />
+                              </div>
+                            </TableCell>
 
-                          <TableCell className={tableCellClassName}>
-                            <div className={chipCellContentClassName}>
-                              <span className={mobileLabelClassName}>
-                                Arena
-                              </span>
-                              <ArenaChip
-                                arena={entry.arena}
-                                className={cn(
-                                  isScreenshotMode &&
-                                    "h-auto px-1 py-0 text-[10px] leading-tight"
-                                )}
-                              />
-                            </div>
-                          </TableCell>
+                            <TableCell
+                              className={cn(
+                                tableCellClassName,
+                                !isScreenshotMode &&
+                                  "col-start-3 row-start-2 justify-self-end"
+                              )}
+                            >
+                              <div className={chipCellContentClassName}>
+                                <span className={mobileLabelClassName}>
+                                  Arena
+                                </span>
+                                <ArenaChip
+                                  arena={entry.arena}
+                                  className={cn(
+                                    isScreenshotMode &&
+                                      "h-auto px-1 py-0 text-[10px] leading-tight"
+                                  )}
+                                />
+                              </div>
+                            </TableCell>
 
-                          <TableCell className={tableCellClassName}>
-                            <div className={stackedCellContentClassName}>
-                              <span className={mobileLabelClassName}>
-                                Division
-                              </span>
-                              <span
-                                className={cn(
-                                  "text-right md:text-left",
-                                  isScreenshotMode &&
-                                    "block truncate text-left"
-                                )}
-                              >
-                                {entry.division}
-                              </span>
-                            </div>
-                          </TableCell>
+                            <TableCell
+                              className={cn(
+                                tableCellClassName,
+                                !isScreenshotMode &&
+                                  "col-start-2 row-start-3 min-w-0 text-xs text-muted-foreground"
+                              )}
+                            >
+                              <div className={stackedCellContentClassName}>
+                                <span className={mobileLabelClassName}>
+                                  Division
+                                </span>
+                                <span
+                                  className={cn(
+                                    "block truncate text-left md:whitespace-normal",
+                                    isScreenshotMode &&
+                                      "block truncate text-left"
+                                  )}
+                                >
+                                  {entry.division}
+                                </span>
+                              </div>
+                            </TableCell>
 
-                          <TableCell className={tableCellClassName}>
-                            <div className={stackedCellContentClassName}>
-                              <span className={mobileLabelClassName}>
-                                Pinny
-                              </span>
-                              <span>{entry.pinnyNumber ?? "—"}</span>
-                            </div>
-                          </TableCell>
-                        </TableRow>
+                            <TableCell
+                              className={cn(
+                                tableCellClassName,
+                                !isScreenshotMode &&
+                                  "col-start-3 row-start-3 justify-self-end text-xs text-muted-foreground"
+                              )}
+                            >
+                              <div className={stackedCellContentClassName}>
+                                <span className={mobileLabelClassName}>
+                                  Pinny
+                                </span>
+                                <span>{entry.pinnyNumber ?? "—"}</span>
+                              </div>
+                            </TableCell>
+                          </TableRow>
                         );
                       })}
                     </TableBody>
@@ -852,7 +1114,7 @@ function ChangeBadge({
     return (
       <Badge
         className={cn(
-          "border-green-200 bg-green-100 text-green-800 hover:bg-green-100",
+          "h-4 rounded-full border-green-200 bg-green-100 px-1.5 py-0 text-[10px] leading-none text-green-800 hover:bg-green-100 sm:h-5 sm:px-2 sm:text-xs",
           isCompact && "px-1 py-0 text-[10px] leading-tight"
         )}
       >
@@ -864,11 +1126,11 @@ function ChangeBadge({
   return (
     <Badge
       className={cn(
-        "border-amber-200 bg-amber-100 text-amber-800 hover:bg-amber-100",
+        "h-4 rounded-full border-amber-200 bg-amber-100 px-1.5 py-0 text-[10px] leading-none text-amber-800 hover:bg-amber-100 sm:h-5 sm:px-2 sm:text-xs",
         isCompact && "px-1 py-0 text-[10px] leading-tight"
       )}
     >
-      Moved
+      Changed
     </Badge>
   );
 }
