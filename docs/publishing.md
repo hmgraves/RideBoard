@@ -22,9 +22,25 @@ create table published_schedules (
   entries jsonb not null,
   team_entries jsonb not null,
   changes jsonb not null,
+  edit_token text not null,
   created_at timestamptz not null,
   updated_at timestamptz not null
 );
+```
+
+If you created the table before update-in-place publishing was added, run this
+migration:
+
+```sql
+alter table published_schedules
+add column if not exists edit_token text;
+
+update published_schedules
+set edit_token = gen_random_uuid()::text
+where edit_token is null;
+
+alter table published_schedules
+alter column edit_token set not null;
 ```
 
 ## Environment Variables
@@ -59,3 +75,4 @@ key.
 3. Open `/schedule`.
 4. Click `Publish`.
 5. Send the generated `/shared/[shareId]` link to the team.
+6. After future imports, click `Update Link` to refresh the same shared URL.

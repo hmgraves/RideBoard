@@ -1,10 +1,12 @@
 import { RideScheduleEntry } from "../../lib/models/ride-schedule-entry";
 import { TeamEntry } from "../../lib/models/team-entry";
+import { PublishedScheduleLink } from "../models/published-schedule";
 import { ScheduleChange } from "./schedule-change-service";
 
 const SCHEDULE_KEY = "trainer-schedule.entries";
 const TEAM_KEY = "trainer-schedule.team";
 const CHANGES_KEY = "trainer-schedule.changes";
+const PUBLISHED_LINK_KEY = "trainer-schedule.published-link";
 const STORAGE_CHANGE_EVENT = "trainer-schedule-storage";
 
 function isBrowser(): boolean {
@@ -62,11 +64,26 @@ export function getScheduleChanges(): ScheduleChange[] {
   return raw ? JSON.parse(raw) : [];
 }
 
+export function savePublishedScheduleLink(link: PublishedScheduleLink): void {
+  if (!isBrowser()) return;
+
+  localStorage.setItem(PUBLISHED_LINK_KEY, JSON.stringify(link));
+  notifyStorageChanged();
+}
+
+export function getPublishedScheduleLink(): PublishedScheduleLink | null {
+  if (!isBrowser()) return null;
+
+  const raw = localStorage.getItem(PUBLISHED_LINK_KEY);
+  return raw ? JSON.parse(raw) : null;
+}
+
 export function clearAllScheduleData(): void {
   if (!isBrowser()) return;
 
   localStorage.removeItem(SCHEDULE_KEY);
   localStorage.removeItem(TEAM_KEY);
   localStorage.removeItem(CHANGES_KEY);
+  localStorage.removeItem(PUBLISHED_LINK_KEY);
   notifyStorageChanged();
 }

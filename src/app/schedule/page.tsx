@@ -13,11 +13,13 @@ import {
   ScheduleChange,
 } from "../../lib/services/schedule-change-service";
 import {
+  useStoredPublishedScheduleLink,
   useStoredScheduleEntries,
   useStoredScheduleChanges,
   useStoredTeamEntries,
 } from "../../lib/hooks/use-stored-schedule-data";
 import { makeHorseRiderKey } from "../../lib/utils/schedule-utils";
+import { savePublishedScheduleLink } from "../../lib/services/local-storage-service";
 
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -43,6 +45,7 @@ export default function SchedulePage() {
   const allEntries = useStoredScheduleEntries();
   const teamEntries = useStoredTeamEntries();
   const scheduleChanges = useStoredScheduleChanges();
+  const publishedScheduleLink = useStoredPublishedScheduleLink();
   const [isScreenshotMode, setIsScreenshotMode] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
   const [publishError, setPublishError] = useState("");
@@ -115,38 +118,68 @@ export default function SchedulePage() {
     ? "whitespace-normal px-1.5 py-1 align-top"
     : "px-2 py-2";
 
-  async function publishSchedule() {
+  const activeSharePath = publishedScheduleLink
+    ? `/shared/${publishedScheduleLink.shareId}`
+    : "";
+  const displayedShareUrl = shareUrl || activeSharePath;
+
+  function getSchedulePayload() {
+    return {
+      title: allEntries[0]?.eventId
+        ? `${allEntries[0].eventId} Team Schedule`
+        : "Team Schedule",
+      eventId: allEntries[0]?.eventId ?? "current-event",
+      entries: allEntries,
+      teamEntries,
+      changes: scheduleChanges,
+    };
+  }
+
+  async function publishOrUpdateSchedule() {
     setPublishError("");
     setIsPublishing(true);
 
     try {
-      const response = await fetch("/api/published-schedules", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: allEntries[0]?.eventId
-            ? `${allEntries[0].eventId} Team Schedule`
-            : "Team Schedule",
-          eventId: allEntries[0]?.eventId ?? "current-event",
-          entries: allEntries,
-          teamEntries,
-          changes: scheduleChanges,
-        }),
-      });
+      const response = await fetch(
+        publishedScheduleLink
+          ? `/api/published-schedules/${publishedScheduleLink.shareId}`
+          : "/api/published-schedules",
+        {
+          method: publishedScheduleLink ? "PUT" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...getSchedulePayload(),
+            editToken: publishedScheduleLink?.editToken,
+          }),
+        }
+      );
 
       const data = (await response.json()) as
-        | { id: string }
+        | { id: string; editToken?: string }
         | { error?: string };
 
       if (!response.ok || !("id" in data)) {
         throw new Error(
           "error" in data && data.error
             ? data.error
-            : "Unable to publish schedule."
+            : publishedScheduleLink
+              ? "Unable to update schedule."
+              : "Unable to publish schedule."
         );
       }
+
+      const nextEditToken = data.editToken ?? publishedScheduleLink?.editToken;
+
+      if (!nextEditToken) {
+        throw new Error("The publish response did not include an edit token.");
+      }
+
+      savePublishedScheduleLink({
+        shareId: data.id,
+        editToken: nextEditToken,
+      });
 
       const nextShareUrl = `${window.location.origin}/shared/${data.id}`;
       setShareUrl(nextShareUrl);
@@ -156,7 +189,11 @@ export default function SchedulePage() {
       }
     } catch (error) {
       setPublishError(
-        error instanceof Error ? error.message : "Unable to publish schedule."
+        error instanceof Error
+          ? error.message
+          : publishedScheduleLink
+            ? "Unable to update schedule."
+            : "Unable to publish schedule."
       );
     } finally {
       setIsPublishing(false);
@@ -164,9 +201,13 @@ export default function SchedulePage() {
   }
 
   async function copyShareUrl() {
-    if (!shareUrl || !navigator.clipboard) return;
+    const shareId = publishedScheduleLink?.shareId;
 
-    await navigator.clipboard.writeText(shareUrl);
+    if (!shareId || !navigator.clipboard) return;
+
+    await navigator.clipboard.writeText(
+      `${window.location.origin}/shared/${shareId}`
+    );
   }
 
   return (
@@ -216,13 +257,19 @@ export default function SchedulePage() {
           <Button
             type="button"
             variant="outline"
-            onClick={publishSchedule}
+            onClick={publishOrUpdateSchedule}
             disabled={
               isPublishing || allEntries.length === 0 || teamEntries.length === 0
             }
           >
             <Share2 aria-hidden="true" />
-            {isPublishing ? "Publishing..." : "Publish"}
+            {isPublishing
+              ? publishedScheduleLink
+                ? "Updating..."
+                : "Publishing..."
+              : publishedScheduleLink
+                ? "Update Link"
+                : "Publish"}
           </Button>
 
           <Button
@@ -260,20 +307,20 @@ export default function SchedulePage() {
         </div>
       </div>
 
-      {shareUrl ? (
+      {displayedShareUrl ? (
         <Card className={cn("mb-6 print:hidden", isScreenshotMode && "hidden")}>
           <CardHeader>
             <CardTitle>Published Schedule</CardTitle>
             <CardDescription>
-              This read-only link has been copied to your clipboard.
+              This read-only link stays the same when you update the schedule.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3 md:flex-row md:items-center">
             <Link
-              href={shareUrl}
+              href={displayedShareUrl}
               className="min-w-0 flex-1 truncate rounded-md border px-3 py-2 text-sm text-muted-foreground"
             >
-              {shareUrl}
+              {displayedShareUrl}
             </Link>
             <Button type="button" variant="outline" onClick={copyShareUrl}>
               <Copy aria-hidden="true" />

@@ -4,11 +4,13 @@ import { useSyncExternalStore } from "react";
 
 import { RideScheduleEntry } from "../models/ride-schedule-entry";
 import { TeamEntry } from "../models/team-entry";
+import { PublishedScheduleLink } from "../models/published-schedule";
 import { ScheduleChange } from "../services/schedule-change-service";
 
 const SCHEDULE_KEY = "trainer-schedule.entries";
 const TEAM_KEY = "trainer-schedule.team";
 const CHANGES_KEY = "trainer-schedule.changes";
+const PUBLISHED_LINK_KEY = "trainer-schedule.published-link";
 const STORAGE_CHANGE_EVENT = "trainer-schedule-storage";
 
 const EMPTY_SCHEDULE_ENTRIES: RideScheduleEntry[] = [];
@@ -21,6 +23,8 @@ let teamCacheRaw: string | null | undefined;
 let teamCacheValue: TeamEntry[] = EMPTY_TEAM_ENTRIES;
 let changesCacheRaw: string | null | undefined;
 let changesCacheValue: ScheduleChange[] = EMPTY_SCHEDULE_CHANGES;
+let publishedLinkCacheRaw: string | null | undefined;
+let publishedLinkCacheValue: PublishedScheduleLink | null = null;
 
 function subscribeToStoredData(onStoreChange: () => void) {
   window.addEventListener("storage", onStoreChange);
@@ -86,6 +90,24 @@ function readScheduleChanges(): ScheduleChange[] {
   return changesCacheValue;
 }
 
+function readPublishedScheduleLink(): PublishedScheduleLink | null {
+  const raw = window.localStorage.getItem(PUBLISHED_LINK_KEY);
+
+  if (!raw) {
+    publishedLinkCacheRaw = raw;
+    publishedLinkCacheValue = null;
+    return publishedLinkCacheValue;
+  }
+
+  if (raw === publishedLinkCacheRaw) {
+    return publishedLinkCacheValue;
+  }
+
+  publishedLinkCacheRaw = raw;
+  publishedLinkCacheValue = JSON.parse(raw);
+  return publishedLinkCacheValue;
+}
+
 export function useStoredScheduleEntries() {
   return useSyncExternalStore(
     subscribeToStoredData,
@@ -107,5 +129,13 @@ export function useStoredScheduleChanges() {
     subscribeToStoredData,
     readScheduleChanges,
     () => EMPTY_SCHEDULE_CHANGES
+  );
+}
+
+export function useStoredPublishedScheduleLink() {
+  return useSyncExternalStore(
+    subscribeToStoredData,
+    readPublishedScheduleLink,
+    () => null
   );
 }

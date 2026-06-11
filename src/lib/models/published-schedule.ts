@@ -20,3 +20,12 @@ export interface PublishedScheduleInput {
   teamEntries: TeamEntry[];
   changes: ScheduleChange[];
 }
+
+export interface PublishedSchedulePublication extends PublishedSchedule {
+  editToken: string;
+}
+
+export interface PublishedScheduleLink {
+  shareId: string;
+  editToken: string;
+}
