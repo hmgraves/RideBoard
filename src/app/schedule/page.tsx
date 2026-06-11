@@ -14,12 +14,16 @@ import {
 } from "../../lib/services/schedule-change-service";
 import {
   useStoredPublishedScheduleLink,
+  useStoredPublishedScheduleSettings,
   useStoredScheduleEntries,
   useStoredScheduleChanges,
   useStoredTeamEntries,
 } from "../../lib/hooks/use-stored-schedule-data";
 import { makeHorseRiderKey } from "../../lib/utils/schedule-utils";
-import { savePublishedScheduleLink } from "../../lib/services/local-storage-service";
+import {
+  savePublishedScheduleLink,
+  savePublishedScheduleSettings,
+} from "../../lib/services/local-storage-service";
 
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -40,16 +44,24 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 
 export default function SchedulePage() {
   const allEntries = useStoredScheduleEntries();
   const teamEntries = useStoredTeamEntries();
   const scheduleChanges = useStoredScheduleChanges();
   const publishedScheduleLink = useStoredPublishedScheduleLink();
+  const publishedScheduleSettings = useStoredPublishedScheduleSettings();
   const [isScreenshotMode, setIsScreenshotMode] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
   const [publishError, setPublishError] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
+
+  const defaultPublishedTitle = allEntries[0]?.eventId
+    ? `${allEntries[0].eventId} Team Schedule`
+    : "Team Schedule";
+  const publishedTitle =
+    publishedScheduleSettings.title || defaultPublishedTitle;
 
   const teamSchedule = useMemo(() => {
     return filterToTeamEntries(allEntries, teamEntries);
@@ -125,9 +137,7 @@ export default function SchedulePage() {
 
   function getSchedulePayload() {
     return {
-      title: allEntries[0]?.eventId
-        ? `${allEntries[0].eventId} Team Schedule`
-        : "Team Schedule",
+      title: publishedTitle,
       eventId: allEntries[0]?.eventId ?? "current-event",
       entries: allEntries,
       teamEntries,
@@ -307,25 +317,48 @@ export default function SchedulePage() {
         </div>
       </div>
 
-      {displayedShareUrl ? (
+      {teamEntries.length > 0 && teamSchedule.length > 0 ? (
         <Card className={cn("mb-6 print:hidden", isScreenshotMode && "hidden")}>
           <CardHeader>
-            <CardTitle>Published Schedule</CardTitle>
+            <CardTitle>Publish Settings</CardTitle>
             <CardDescription>
-              This read-only link stays the same when you update the schedule.
+              Set the title that appears on the shared read-only schedule.
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-3 md:flex-row md:items-center">
-            <Link
-              href={displayedShareUrl}
-              className="min-w-0 flex-1 truncate rounded-md border px-3 py-2 text-sm text-muted-foreground"
-            >
-              {displayedShareUrl}
-            </Link>
-            <Button type="button" variant="outline" onClick={copyShareUrl}>
-              <Copy aria-hidden="true" />
-              Copy
-            </Button>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label
+                htmlFor="publishedTitle"
+                className="text-sm font-medium leading-none"
+              >
+                Shared page title
+              </label>
+              <Input
+                id="publishedTitle"
+                value={publishedTitle}
+                onChange={(event) =>
+                  savePublishedScheduleSettings({
+                    title: event.target.value,
+                  })
+                }
+                placeholder={defaultPublishedTitle}
+              />
+            </div>
+
+            {displayedShareUrl ? (
+              <div className="flex flex-col gap-3 md:flex-row md:items-center">
+                <Link
+                  href={displayedShareUrl}
+                  className="min-w-0 flex-1 truncate rounded-md border px-3 py-2 text-sm text-muted-foreground"
+                >
+                  {displayedShareUrl}
+                </Link>
+                <Button type="button" variant="outline" onClick={copyShareUrl}>
+                  <Copy aria-hidden="true" />
+                  Copy
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ) : null}

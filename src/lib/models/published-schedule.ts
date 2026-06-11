@@ -29,3 +29,7 @@ export interface PublishedScheduleLink {
   shareId: string;
   editToken: string;
 }
+
+export interface PublishedScheduleSettings {
+  title: string;
+}

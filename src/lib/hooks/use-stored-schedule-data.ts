@@ -4,13 +4,17 @@ import { useSyncExternalStore } from "react";
 
 import { RideScheduleEntry } from "../models/ride-schedule-entry";
 import { TeamEntry } from "../models/team-entry";
-import { PublishedScheduleLink } from "../models/published-schedule";
+import {
+  PublishedScheduleLink,
+  PublishedScheduleSettings,
+} from "../models/published-schedule";
 import { ScheduleChange } from "../services/schedule-change-service";
 
 const SCHEDULE_KEY = "trainer-schedule.entries";
 const TEAM_KEY = "trainer-schedule.team";
 const CHANGES_KEY = "trainer-schedule.changes";
 const PUBLISHED_LINK_KEY = "trainer-schedule.published-link";
+const PUBLISHED_SETTINGS_KEY = "trainer-schedule.published-settings";
 const STORAGE_CHANGE_EVENT = "trainer-schedule-storage";
 
 const EMPTY_SCHEDULE_ENTRIES: RideScheduleEntry[] = [];
@@ -25,6 +29,8 @@ let changesCacheRaw: string | null | undefined;
 let changesCacheValue: ScheduleChange[] = EMPTY_SCHEDULE_CHANGES;
 let publishedLinkCacheRaw: string | null | undefined;
 let publishedLinkCacheValue: PublishedScheduleLink | null = null;
+let publishedSettingsCacheRaw: string | null | undefined;
+let publishedSettingsCacheValue: PublishedScheduleSettings = { title: "" };
 
 function subscribeToStoredData(onStoreChange: () => void) {
   window.addEventListener("storage", onStoreChange);
@@ -108,6 +114,24 @@ function readPublishedScheduleLink(): PublishedScheduleLink | null {
   return publishedLinkCacheValue;
 }
 
+function readPublishedScheduleSettings(): PublishedScheduleSettings {
+  const raw = window.localStorage.getItem(PUBLISHED_SETTINGS_KEY);
+
+  if (!raw) {
+    publishedSettingsCacheRaw = raw;
+    publishedSettingsCacheValue = { title: "" };
+    return publishedSettingsCacheValue;
+  }
+
+  if (raw === publishedSettingsCacheRaw) {
+    return publishedSettingsCacheValue;
+  }
+
+  publishedSettingsCacheRaw = raw;
+  publishedSettingsCacheValue = JSON.parse(raw);
+  return publishedSettingsCacheValue;
+}
+
 export function useStoredScheduleEntries() {
   return useSyncExternalStore(
     subscribeToStoredData,
@@ -137,5 +161,13 @@ export function useStoredPublishedScheduleLink() {
     subscribeToStoredData,
     readPublishedScheduleLink,
     () => null
+  );
+}
+
+export function useStoredPublishedScheduleSettings() {
+  return useSyncExternalStore(
+    subscribeToStoredData,
+    readPublishedScheduleSettings,
+    () => ({ title: "" })
   );
 }

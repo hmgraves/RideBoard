@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ArenaChip, PhaseChip } from "@/components/schedule-chips";
+import { LocalPublishedTime } from "@/components/local-published-time";
 import {
   Card,
   CardContent,
@@ -63,7 +64,7 @@ export default async function SharedSchedulePage({
             {publishedSchedule.title}
           </h1>
           <p className="max-w-2xl text-muted-foreground">
-            Published {new Date(publishedSchedule.updatedAt).toLocaleString()}.
+            Published <LocalPublishedTime isoDate={publishedSchedule.updatedAt} />.
           </p>
         </div>
 
