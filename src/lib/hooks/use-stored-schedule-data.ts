@@ -20,6 +20,7 @@ const STORAGE_CHANGE_EVENT = "trainer-schedule-storage";
 const EMPTY_SCHEDULE_ENTRIES: RideScheduleEntry[] = [];
 const EMPTY_TEAM_ENTRIES: TeamEntry[] = [];
 const EMPTY_SCHEDULE_CHANGES: ScheduleChange[] = [];
+const EMPTY_PUBLISHED_SETTINGS: PublishedScheduleSettings = { title: "" };
 
 let scheduleCacheRaw: string | null | undefined;
 let scheduleCacheValue: RideScheduleEntry[] = EMPTY_SCHEDULE_ENTRIES;
@@ -30,7 +31,8 @@ let changesCacheValue: ScheduleChange[] = EMPTY_SCHEDULE_CHANGES;
 let publishedLinkCacheRaw: string | null | undefined;
 let publishedLinkCacheValue: PublishedScheduleLink | null = null;
 let publishedSettingsCacheRaw: string | null | undefined;
-let publishedSettingsCacheValue: PublishedScheduleSettings = { title: "" };
+let publishedSettingsCacheValue: PublishedScheduleSettings =
+  EMPTY_PUBLISHED_SETTINGS;
 
 function subscribeToStoredData(onStoreChange: () => void) {
   window.addEventListener("storage", onStoreChange);
@@ -119,7 +121,7 @@ function readPublishedScheduleSettings(): PublishedScheduleSettings {
 
   if (!raw) {
     publishedSettingsCacheRaw = raw;
-    publishedSettingsCacheValue = { title: "" };
+    publishedSettingsCacheValue = EMPTY_PUBLISHED_SETTINGS;
     return publishedSettingsCacheValue;
   }
 
@@ -168,6 +170,6 @@ export function useStoredPublishedScheduleSettings() {
   return useSyncExternalStore(
     subscribeToStoredData,
     readPublishedScheduleSettings,
-    () => ({ title: "" })
+    () => EMPTY_PUBLISHED_SETTINGS
   );
 }
